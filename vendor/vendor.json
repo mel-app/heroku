@@ -15,16 +15,10 @@
 			"revisionTime": "2016-11-29T22:14:28Z"
 		},
 		{
-			"checksumSHA1": "mk/pwEwa0ftBNlC4n6bexLdZm7w=",
-			"path": "github.com/mattn/go-sqlite3",
-			"revision": "542ae647f8601bafd96233961b150cae198e0295",
-			"revisionTime": "2015-04-27T23:57:25Z"
-		},
-		{
-			"checksumSHA1": "iwIMJfMSDR3LejLlheC6z/Z84WA=",
+			"checksumSHA1": "B3Wmcz9sEUz419JhrqydkUpeV2g=",
 			"path": "github.com/mel-app/backend/src",
-			"revision": "b69717abd21c611a7d3366f113b90ea4593d2f0e",
-			"revisionTime": "2016-12-01T01:29:45Z"
+			"revision": "6a5db0940060c88e4003f0a3a336245f9dec3c5c",
+			"revisionTime": "2016-12-01T03:09:37Z"
 		},
 		{
 			"checksumSHA1": "1MGpGDQqnUoRpv7VEcQrXOBydXE=",

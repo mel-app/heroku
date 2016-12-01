@@ -18,16 +18,9 @@ import (
 )
 
 // handle a single HTTP request.
-func handle(writer http.ResponseWriter, request *http.Request, dbtype, dbname string) {
+func handle(writer http.ResponseWriter, request *http.Request, db *sql.DB) {
 	// Wrapper for failing functions.
 	fail := func(status int) { http.Error(writer, http.StatusText(status), status) }
-
-	// Open the database.
-	db, err := sql.Open(dbtype, dbname)
-	if err != nil {
-		internalError(fail, err)
-		return
-	}
 
 	// Authenticate the user.
 	user, ok := authenticateUser(writer, fail, request, db)
@@ -83,14 +76,12 @@ func handle(writer http.ResponseWriter, request *http.Request, dbtype, dbname st
 }
 
 // Run the server on the given port, connecting to the given database.
-// dbtype and dbname are passed to the sql module's open function.
-func Run(port, dbtype, dbname string) {
-	log.Printf("Running on port :%s, with dbtype %s and dbname %s\n", port,
-		dbtype, dbname)
+func Run(port string, db *sql.DB) {
+	log.Printf("Running on port :%s\n", port)
 	seed()
 	log.Fatal(http.ListenAndServe(":"+port,
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			handle(w, r, dbtype, dbname)
+			handle(w, r, db)
 		}),
 	))
 }

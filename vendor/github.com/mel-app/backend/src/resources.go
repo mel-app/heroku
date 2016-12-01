@@ -14,8 +14,6 @@ import (
 	"regexp"
 	"strconv"
 	"time"
-
-	_ "github.com/mattn/go-sqlite3"
 )
 
 var invalidResource error = fmt.Errorf("Invalid defaultResource\n")

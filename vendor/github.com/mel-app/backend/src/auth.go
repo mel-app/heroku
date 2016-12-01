@@ -15,7 +15,6 @@ import (
 	"net/http"
 
 	"database/sql"
-	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/crypto/scrypt"
 )
 
