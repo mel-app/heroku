@@ -1,0 +1,43 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "avqi4lkviHdrNJ92cXCwrw9x870=",
+			"path": "github.com/lib/pq",
+			"revision": "4a82388ebc5138c8289fe9bc602cb0b3e32cd617",
+			"revisionTime": "2016-11-29T22:14:28Z"
+		},
+		{
+			"checksumSHA1": "xppHi82MLqVx1eyQmbhTesAEjx8=",
+			"path": "github.com/lib/pq/oid",
+			"revision": "4a82388ebc5138c8289fe9bc602cb0b3e32cd617",
+			"revisionTime": "2016-11-29T22:14:28Z"
+		},
+		{
+			"checksumSHA1": "mk/pwEwa0ftBNlC4n6bexLdZm7w=",
+			"path": "github.com/mattn/go-sqlite3",
+			"revision": "542ae647f8601bafd96233961b150cae198e0295",
+			"revisionTime": "2015-04-27T23:57:25Z"
+		},
+		{
+			"checksumSHA1": "iwIMJfMSDR3LejLlheC6z/Z84WA=",
+			"path": "github.com/mel-app/backend/src",
+			"revision": "b69717abd21c611a7d3366f113b90ea4593d2f0e",
+			"revisionTime": "2016-12-01T01:29:45Z"
+		},
+		{
+			"checksumSHA1": "1MGpGDQqnUoRpv7VEcQrXOBydXE=",
+			"path": "golang.org/x/crypto/pbkdf2",
+			"revision": "9477e0b78b9ac3d0b03822fd95422e2fe07627cd",
+			"revisionTime": "2016-10-31T15:37:30Z"
+		},
+		{
+			"checksumSHA1": "E8pDMGySfy5Mw+jzXOkOxo35bww=",
+			"path": "golang.org/x/crypto/scrypt",
+			"revision": "9477e0b78b9ac3d0b03822fd95422e2fe07627cd",
+			"revisionTime": "2016-10-31T15:37:30Z"
+		}
+	],
+	"rootPath": "github.com/mel-app/heroku"
+}

@@ -1,0 +1,8 @@
+{
+  "name": "mel-app-backend",
+  "description": "Backend for the MEL app",
+  "image": "heroku/go:1.6",
+  "mount_dir": "src/github.com/mel-app/heroku",
+  "website": "http://github.com/mel-app/heroku",
+  "repository": "http://github.com/mel-app/heroku"
+}
