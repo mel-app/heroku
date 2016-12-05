@@ -15,22 +15,22 @@
 			"revisionTime": "2016-11-29T22:14:28Z"
 		},
 		{
-			"checksumSHA1": "B3Wmcz9sEUz419JhrqydkUpeV2g=",
+			"checksumSHA1": "pNpHK5sAw7rpLC8RpXiX7zqZRqw=",
 			"path": "github.com/mel-app/backend/src",
-			"revision": "6a5db0940060c88e4003f0a3a336245f9dec3c5c",
-			"revisionTime": "2016-12-01T03:09:37Z"
+			"revision": "d439db03ca5ff181c8ec25808e22514355e6dc81",
+			"revisionTime": "2016-12-05T22:07:10Z"
 		},
 		{
 			"checksumSHA1": "1MGpGDQqnUoRpv7VEcQrXOBydXE=",
 			"path": "golang.org/x/crypto/pbkdf2",
-			"revision": "9477e0b78b9ac3d0b03822fd95422e2fe07627cd",
-			"revisionTime": "2016-10-31T15:37:30Z"
+			"revision": "8a549a1948fc5271eb24f36dcb0d3b47dec75a16",
+			"revisionTime": "2016-12-02T05:44:17Z"
 		},
 		{
 			"checksumSHA1": "E8pDMGySfy5Mw+jzXOkOxo35bww=",
 			"path": "golang.org/x/crypto/scrypt",
-			"revision": "9477e0b78b9ac3d0b03822fd95422e2fe07627cd",
-			"revisionTime": "2016-10-31T15:37:30Z"
+			"revision": "8a549a1948fc5271eb24f36dcb0d3b47dec75a16",
+			"revisionTime": "2016-12-02T05:44:17Z"
 		}
 	],
 	"rootPath": "github.com/mel-app/heroku"

@@ -98,10 +98,14 @@ func (r defaultResource) delete() error {
 	return invalidMethod
 }
 
-type login struct {
+type loginResource struct {
 	resource
 	user string
 	db   *sql.DB
+}
+
+type login struct {
+	Manager bool
 }
 
 // FIXME: Implement set as a way of changing passwords.
@@ -109,11 +113,18 @@ type login struct {
 // FIXME: Figure out how to move the login creation from authenticateUser to
 // create here.
 
-func (l *login) get(enc encoder) error {
-	return nil // No-op - for checking login credentials.
+// get for loginResource returns some basic information about the user.
+// It can also be used to check login credentials.
+func (l *loginResource) get(enc encoder) error {
+	login := login{Manager:false}
+	err := l.db.QueryRow("SELECT is_manager FROM users WHERE name=$1", l.user).Scan(&login.Manager)
+	if err != nil {
+		return err
+	}
+	return enc.Encode(login)
 }
 
-func (l *login) create(dec decoder, success func(string, interface{}) error) error {
+func (l *loginResource) create(dec decoder, success func(string, interface{}) error) error {
 	return nil // Implemented in authenticateUser
 }
 
@@ -602,7 +613,7 @@ func newDeliverable(user string, id uint, pid uint, db *sql.DB) (resource, error
 func fromURI(user, uri string, db *sql.DB) (resource, error) {
 	// Match the path to the regular expressions.
 	if loginRe.MatchString(uri) {
-		return &login{defaultResource{}, user, db}, nil
+		return &loginResource{defaultResource{}, user, db}, nil
 	} else if projectListRe.MatchString(uri) {
 		return newProjectList(user, db)
 	} else if projectRe.MatchString(uri) {
