@@ -9,6 +9,7 @@ package backend
 
 import (
 	"database/sql"
+	"encoding/base32"
 	"fmt"
 	"math/rand"
 	"regexp"
@@ -69,7 +70,8 @@ var (
 	projectListRe     = regexp.MustCompile(`\A/projects\z`)
 	projectRe         = regexp.MustCompile(`\A/projects/(\d+)\z`)
 	flagRe            = regexp.MustCompile(`\A/projects/(\d+)/flag\z`)
-	clientsRe         = regexp.MustCompile(`\A/projects/(\d+)/clients\z`)
+	clientListRe      = regexp.MustCompile(`\A/projects/(\d+)/clients\z`)
+	clientRe          = regexp.MustCompile(`\A/projects/(\d+)/clients/([^/]+)\z`)
 	deliverableListRe = regexp.MustCompile(`\A/projects/(\d+)/deliverables\z`)
 	deliverableRe     = regexp.MustCompile(`\A/projects/(\d+)/deliverables/(\d+)\z`)
 )
@@ -98,10 +100,14 @@ func (r defaultResource) delete() error {
 	return invalidMethod
 }
 
-type login struct {
+type loginResource struct {
 	resource
 	user string
 	db   *sql.DB
+}
+
+type login struct {
+	Manager bool
 }
 
 // FIXME: Implement set as a way of changing passwords.
@@ -109,11 +115,18 @@ type login struct {
 // FIXME: Figure out how to move the login creation from authenticateUser to
 // create here.
 
-func (l *login) get(enc encoder) error {
-	return nil // No-op - for checking login credentials.
+// get for loginResource returns some basic information about the user.
+// It can also be used to check login credentials.
+func (l *loginResource) get(enc encoder) error {
+	login := login{Manager:false}
+	err := l.db.QueryRow("SELECT is_manager FROM users WHERE name=$1", l.user).Scan(&login.Manager)
+	if err != nil {
+		return err
+	}
+	return enc.Encode(login)
 }
 
-func (l *login) create(dec decoder, success func(string, interface{}) error) error {
+func (l *loginResource) create(dec decoder, success func(string, interface{}) error) error {
 	return nil // Implemented in authenticateUser
 }
 
@@ -371,21 +384,21 @@ func newFlag(user string, pid uint, db *sql.DB) (resource, error) {
 	return &flagResource{defaultResource{}, pid, proj, db}, err
 }
 
-type clients struct {
+type clientList struct {
 	resource
 	pid     uint
 	project resource
 	db      *sql.DB
 }
 
-func (c *clients) Permissions() int {
+func (c *clientList) Permissions() int {
 	if c.project.Permissions()&set != 0 {
-		return get | set
+		return get | create
 	}
 	return 0
 }
 
-func (c *clients) get(enc encoder) error {
+func (c *clientList) get(enc encoder) error {
 	rows, err := c.db.Query("SELECT name FROM views WHERE pid=$1", c.pid)
 	if err != nil {
 		return err
@@ -393,12 +406,12 @@ func (c *clients) get(enc encoder) error {
 	defer rows.Close()
 
 	for rows.Next() {
-		id := ""
-		err = rows.Scan(&id)
+		name := ""
+		err = rows.Scan(&name)
 		if err != nil {
 			return err
 		}
-		err = enc.Encode(id)
+		err = enc.Encode(base32.StdEncoding.EncodeToString([]byte(name)))
 		if err != nil {
 			return err
 		}
@@ -406,62 +419,79 @@ func (c *clients) get(enc encoder) error {
 	return rows.Err()
 }
 
-func (c *clients) set(dec decoder) error {
-	// TODO: Implement syncronisation.
+func (c *clientList) create(dec decoder, success func(string, interface{}) error) error {
+	client := client{}
+	err := dec.Decode(&client)
+	if err != nil {
+		return invalidBody
+	}
 
-	// Populate the list of users in the database.
-	old := map[string]bool{} // user->removed
-	enc := mapEncoder{old}
-	err := c.get(&enc)
+	// Check if the user exists. This is strictly not required, but lets us
+	// warn the user if the user made a typo.
+	dbuser := ""
+	err = c.db.QueryRow("SELECT name FROM users WHERE name=$1", client.Name).
+		Scan(&dbuser)
+	if err == sql.ErrNoRows {
+		return invalidBody
+	} else if err != nil {
+		return err
+	}
+
+	_, err = c.db.Exec("INSERT INTO views VALUES ($1, $2)", client.Name, c.pid)
 	if err != nil {
 		return err
 	}
 
-	// Find added clients and update the list.
-	for dec.More() {
-		user := ""
-		err = dec.Decode(&user)
-		if err != nil {
-			return invalidBody
-		}
-		if _, ok := old[user]; !ok {
-			// new user; add it to the database.
-			// We first check that the user actually exists.
-			dbuser := ""
-			err = c.db.QueryRow("SELECT name FROM users WHERE name=$1", user).
-				Scan(&dbuser)
-			if err == sql.ErrNoRows {
-				return invalidBody
-			} else if err != nil {
-				return err
-			}
-			// Now add the user.
-			_, err = c.db.Exec("INSERT INTO views VALUES ($1, $2)", user, c.pid)
-			if err != nil {
-				return err
-			}
-		} else {
-			// Mark the user as 'found'
-			old[user] = false
-		}
-	}
+	// Populate the Id field; this will be accessed through a base32 encoding
+	// of the Name field.
+	client.Id = base32.StdEncoding.EncodeToString([]byte(client.Name))
 
-	// Find old clients and remove them.
-	for key, removed := range old {
-		if removed {
-			_, err = c.db.Exec("DELETE FROM views WHERE name=$1 and pid=$2", key, c.pid)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
+	return success(fmt.Sprintf("/projects/%d/clients/%s", c.pid, client.Id), client)
 }
 
-func newClients(user string, pid uint, db *sql.DB) (resource, error) {
+func newClientList(user string, pid uint, db *sql.DB) (resource, error) {
 	proj, err := newProject(user, pid, db)
-	return &clients{defaultResource{}, pid, proj, db}, err
+	return &clientList{defaultResource{}, pid, proj, db}, err
+}
+
+type clientResource struct {
+	resource
+	id      string
+	name    string
+	pid     uint
+	project resource
+	db      *sql.DB
+}
+
+type client struct {
+	Id        string // base32 encoded Name
+	Name      string
+	IsManager bool // TODO: Support adding/removing managers through this.
+}
+
+func (c *clientResource) Permissions() int {
+	if c.project.Permissions()&set != 0 {
+		return get | delete
+	}
+	return 0
+}
+
+func (c *clientResource) get(enc encoder) error {
+	client := client{}
+	client.Id = c.id
+	client.Name = c.name
+	client.IsManager = false // We don't support sending this information.
+	return enc.Encode(client)
+}
+
+func (c *clientResource) delete() error {
+	_, err := c.db.Exec("DELETE FROM views WHERE name=$1 and pid=$2", c.name, c.pid)
+	return err
+}
+
+func newClient(user, id, name string, pid uint, db *sql.DB) (resource, error) {
+	proj, err := newProject(user, pid, db)
+	return &clientResource{defaultResource{}, id, name, pid, proj, db}, err
 }
 
 type deliverableList struct {
@@ -602,7 +632,7 @@ func newDeliverable(user string, id uint, pid uint, db *sql.DB) (resource, error
 func fromURI(user, uri string, db *sql.DB) (resource, error) {
 	// Match the path to the regular expressions.
 	if loginRe.MatchString(uri) {
-		return &login{defaultResource{}, user, db}, nil
+		return &loginResource{defaultResource{}, user, db}, nil
 	} else if projectListRe.MatchString(uri) {
 		return newProjectList(user, db)
 	} else if projectRe.MatchString(uri) {
@@ -617,12 +647,23 @@ func fromURI(user, uri string, db *sql.DB) (resource, error) {
 			return nil, err
 		}
 		return newFlag(user, uint(pid), db)
-	} else if clientsRe.MatchString(uri) {
-		pid, err := strconv.Atoi(clientsRe.FindStringSubmatch(uri)[1])
+	} else if clientListRe.MatchString(uri) {
+		pid, err := strconv.Atoi(clientListRe.FindStringSubmatch(uri)[1])
 		if err != nil {
 			return nil, err
 		}
-		return newClients(user, uint(pid), db)
+		return newClientList(user, uint(pid), db)
+	} else if clientRe.MatchString(uri) {
+		pid, err := strconv.Atoi(clientRe.FindStringSubmatch(uri)[1])
+		if err != nil {
+			return nil, err
+		}
+		id := clientRe.FindStringSubmatch(uri)[2]
+		name, err := base32.StdEncoding.DecodeString(id)
+		if err != nil {
+			return nil, err
+		}
+		return newClient(user, id, string(name), uint(pid), db)
 	} else if deliverableListRe.MatchString(uri) {
 		pid, err := strconv.Atoi(deliverableListRe.FindStringSubmatch(uri)[1])
 		if err != nil {
