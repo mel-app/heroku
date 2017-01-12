@@ -230,7 +230,7 @@ type project struct {
 func (p project) valid() bool {
 	return (p.Percentage <= 100) &&
 		(len(p.Name) < dbNameLen) && (len(p.Name) > 0) &&
-		(len(p.Description) < dbDescLen) && (len(p.Description) > 0)
+		(len(p.Description) < dbDescLen)
 }
 
 func (p *projectResource) Permissions() int {
