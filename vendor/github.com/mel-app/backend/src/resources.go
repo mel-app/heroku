@@ -127,7 +127,12 @@ func (l *loginResource) get(enc encoder) error {
 }
 
 func (l *loginResource) create(dec decoder, success func(string, interface{}) error) error {
-	return nil // Implemented in authenticateUser
+	login := login{Manager:false}
+	err := l.db.QueryRow("SELECT is_manager FROM users WHERE name=$1", l.user).Scan(&login.Manager)
+	if err != nil {
+		return err
+	}
+	return success("/login", login)
 }
 
 type projectList struct {
