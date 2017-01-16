@@ -179,20 +179,20 @@ func (l *projectList) create(dec decoder, success func(string, interface{}) erro
 	if err != nil || !project.valid() {
 		return invalidBody
 	}
-	project.Pid = uint(rand.Int())
-	_, err = l.db.Exec("INSERT INTO projects VALUES ($1, $2, $3, $4, $5, $6)",
-		project.Pid, project.Name, project.Percentage, project.Description,
-		false, 0)
+	project.Id = uint(rand.Int())
+	_, err = l.db.Exec("INSERT INTO projects VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+		project.Id, project.Name, project.Percentage, project.Description,
+		project.Updated, 0, false, 0)
 	if err != nil {
 		return err
 	}
 
 	// Add the user to the project.
-	_, err = l.db.Exec("INSERT INTO owns VALUES ($1, $2)", l.user, project.Pid)
+	_, err = l.db.Exec("INSERT INTO owns VALUES ($1, $2)", l.user, project.Id)
 	if err != nil {
 		return err
 	}
-	return success(fmt.Sprintf("/projects/%d", project.Pid), project)
+	return success(fmt.Sprintf("/projects/%d", project.Id), project)
 }
 
 func newProjectList(user string, db *sql.DB) (resource, error) {
@@ -218,15 +218,18 @@ type projectResource struct {
 }
 
 type project struct {
-	Pid         uint
+	Id          uint
 	Name        string
 	Percentage  uint
 	Description string
+	Updated	    string
+	Version	    uint
 	Owns        bool
 }
 
 // valid returns true if the given project looks like it should fit in the
 // database with no errors.
+// FIXME: Validate any dates.
 func (p project) valid() bool {
 	return (p.Percentage <= 100) &&
 		(len(p.Name) < dbNameLen) && (len(p.Name) > 0) &&
@@ -238,13 +241,13 @@ func (p *projectResource) Permissions() int {
 }
 
 func (p *projectResource) get(enc encoder) error {
-	name, percentage, description := "", 0, ""
-	err := p.db.QueryRow("SELECT name, percentage, description FROM projects WHERE id=$1", p.pid).
-		Scan(&name, &percentage, &description)
+	name, percentage, description, updated, version := "", 0, "", "", 0
+	err := p.db.QueryRow("SELECT name, percentage, description, updated, version FROM projects WHERE id=$1", p.pid).
+		Scan(&name, &percentage, &description, &updated, &version)
 	if err != nil {
 		return err
 	}
-	project := project{p.pid, name, uint(percentage), description, p.permissions&set != 0}
+	project := project{p.pid, name, uint(percentage), description, updated, uint(version), p.permissions&set != 0}
 	return enc.Encode(project)
 }
 
@@ -255,11 +258,11 @@ func (p *projectResource) get(enc encoder) error {
 func (p *projectResource) set(dec decoder) error {
 	project := project{}
 	err := dec.Decode(&project)
-	if err != nil || !project.valid() || project.Pid != p.pid {
+	if err != nil || !project.valid() || project.Id != p.pid {
 		return invalidBody
 	}
-	_, err = p.db.Exec("UPDATE projects SET name=$1, percentage=$2, description=$3 WHERE id=$4",
-		project.Name, project.Percentage, project.Description, p.pid)
+	_, err = p.db.Exec("UPDATE projects SET name=$1, percentage=$2, description=$3, updated=$4 WHERE id=$5",
+		project.Name, project.Percentage, project.Description, project.Updated, p.pid)
 	return err
 }
 
@@ -544,8 +547,8 @@ func (l *deliverableList) create(dec decoder, success func(string, interface{}) 
 		return invalidBody
 	}
 	v.Id = uint(rand.Int())
-	_, err = l.db.Exec("INSERT INTO deliverables VALUES ($1, $2, $3, $4, $5, $6)",
-		v.Id, l.pid, v.Name, v.Due, v.Percentage, v.Description)
+	_, err = l.db.Exec("INSERT INTO deliverables VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+		v.Id, l.pid, v.Name, v.Due, v.Percentage, v.Submitted, v.Description, v.Updated, 0)
 	if err != nil {
 		return err
 	}
@@ -570,12 +573,15 @@ type deliverable struct {
 	Name        string
 	Due         string
 	Percentage  uint
+	Submitted   bool
 	Description string
+	Updated	    string
+	Version	    uint
 }
 
 // valid of deliverables returns true if the value will fit in the database and
 // is valid.
-// FIXME: Validate the Due value.
+// FIXME: Validate any dates.
 func (d deliverable) valid() bool {
 	return (d.Percentage <= 100) &&
 		(len(d.Name) < dbNameLen) && (len(d.Name) > 0) &&
@@ -591,8 +597,8 @@ func (d *deliverableResource) Permissions() int {
 
 func (d *deliverableResource) get(enc encoder) error {
 	v := deliverable{}
-	err := d.db.QueryRow("SELECT name, due, percentage, description FROM deliverables WHERE id=$1 and pid=$2", d.id, d.pid).
-		Scan(&v.Name, &v.Due, &v.Percentage, &v.Description)
+	err := d.db.QueryRow("SELECT name, due, percentage, submitted, description, updated, version FROM deliverables WHERE id=$1 and pid=$2", d.id, d.pid).
+		Scan(&v.Name, &v.Due, &v.Percentage, &v.Submitted, &v.Description, &v.Updated, &v.Version)
 	if err != nil {
 		return err
 	}
@@ -605,8 +611,8 @@ func (d *deliverableResource) set(dec decoder) error {
 	if err != nil || !v.valid() {
 		return invalidBody
 	}
-	_, err = d.db.Exec("UPDATE deliverables SET name=$1, due=$2, percentage=$3, description=$4 WHERE id=$5 and pid=$6",
-		v.Name, v.Due, v.Percentage, v.Description, d.id, d.pid)
+	_, err = d.db.Exec("UPDATE deliverables SET name=$1, due=$2, percentage=$3, submitted=$4, description=$5, updated=$6 WHERE id=$7 and pid=$8",
+		v.Name, v.Due, v.Percentage, v.Submitted, v.Description, v.Updated, d.id, d.pid)
 	return err
 }
 

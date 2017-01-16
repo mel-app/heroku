@@ -1,8 +1,6 @@
 /*
 MEL app backend.
 
-
-
 Author:		Alastair Hughes
 Contact:	<hobbitalastair at yandex dot com>
 */
