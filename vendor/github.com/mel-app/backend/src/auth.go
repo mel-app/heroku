@@ -27,6 +27,7 @@ func internalError(fail func(int), err error) {
 }
 
 // SetPassword sets the given user's password.
+// TODO: We should not need to export this.
 func SetPassword(user, password string, db *sql.DB) error {
 	salt := make([]byte, passwordSize)
 	err := db.QueryRow("SELECT salt FROM users WHERE name=$1", user).Scan(&salt)
