@@ -100,6 +100,12 @@ func (d DB) Init() {
 			log.Printf("Error executing '%s': %q\n", cmd, err)
 		}
 	}
+
+	// Set the default passwords.
+	SetPassword("beth", "test", d.db)
+	SetPassword("bob", "test", d.db)
+	SetPassword("bill", "test", d.db)
+	SetPassword("ben", "test", d.db)
 }
 
 // vim: sw=4 ts=4 noexpandtab

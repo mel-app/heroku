@@ -99,12 +99,6 @@ func authenticateUser(writer http.ResponseWriter, fail func(int), request *http.
 		return user, false
 	}
 
-	// Check the password.
-	if string(dbpassword) == "" {
-		// Special case an empty password in the database.
-		// This lets us create "public" demonstration accounts.
-		return user, true
-	}
 	key, err := encryptPassword(password, salt)
 	if err != nil {
 		internalError(fail, err)
