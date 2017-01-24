@@ -3,34 +3,34 @@
 	"ignore": "test",
 	"package": [
 		{
-			"checksumSHA1": "avqi4lkviHdrNJ92cXCwrw9x870=",
+			"checksumSHA1": "tvimR1R9mxvCDSUxlnKgIXjJBus=",
 			"path": "github.com/lib/pq",
-			"revision": "4a82388ebc5138c8289fe9bc602cb0b3e32cd617",
-			"revisionTime": "2016-11-29T22:14:28Z"
+			"revision": "67c3f2a8884c9b1aac5503c8d42ae4f73a93511c",
+			"revisionTime": "2017-01-17T20:56:33Z"
 		},
 		{
 			"checksumSHA1": "xppHi82MLqVx1eyQmbhTesAEjx8=",
 			"path": "github.com/lib/pq/oid",
-			"revision": "4a82388ebc5138c8289fe9bc602cb0b3e32cd617",
-			"revisionTime": "2016-11-29T22:14:28Z"
+			"revision": "67c3f2a8884c9b1aac5503c8d42ae4f73a93511c",
+			"revisionTime": "2017-01-17T20:56:33Z"
 		},
 		{
 			"checksumSHA1": "7KBq89DDoWs13OSsJdZ2OrW/jLs=",
 			"path": "github.com/mel-app/backend/src",
-			"revision": "0ac2d7a35b91b08a890078e1b39e1f997cd63e25",
-			"revisionTime": "2017-01-20T00:31:45Z"
+			"revision": "56d0e4f3e81551a01eb9da0324ec100454f2e51b",
+			"revisionTime": "2017-01-23T21:28:38Z"
 		},
 		{
 			"checksumSHA1": "1MGpGDQqnUoRpv7VEcQrXOBydXE=",
 			"path": "golang.org/x/crypto/pbkdf2",
-			"revision": "8a549a1948fc5271eb24f36dcb0d3b47dec75a16",
-			"revisionTime": "2016-12-02T05:44:17Z"
+			"revision": "41d678d1df78cd0410143162dff954e6dc09300f",
+			"revisionTime": "2017-01-16T12:25:54Z"
 		},
 		{
 			"checksumSHA1": "E8pDMGySfy5Mw+jzXOkOxo35bww=",
 			"path": "golang.org/x/crypto/scrypt",
-			"revision": "8a549a1948fc5271eb24f36dcb0d3b47dec75a16",
-			"revisionTime": "2016-12-02T05:44:17Z"
+			"revision": "41d678d1df78cd0410143162dff954e6dc09300f",
+			"revisionTime": "2017-01-16T12:25:54Z"
 		}
 	],
 	"rootPath": "github.com/mel-app/heroku"
