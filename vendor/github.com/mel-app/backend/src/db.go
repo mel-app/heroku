@@ -48,7 +48,7 @@ func (d DB) Init() {
 			name VARCHAR(128), -- Type??
 			percentage SMALLINT CHECK (percentage >= 0 and percentage <= 100),
 			description VARCHAR(512), -- Size??
-			updated DATE,
+			updated TIMESTAMP WITH TIME ZONE,
 			version INT,
 			flag BOOL,
 			flag_version INT
@@ -57,11 +57,11 @@ func (d DB) Init() {
 			id BIGINT,
 			pid BIGINT,
 			name VARCHAR(128),
-			due DATE,
+			due TIMESTAMP WITH TIME ZONE,
 			percentage SMALLINT CHECK (percentage >= 0 and percentage <= 100),
 			submitted BOOL, -- Whether or not the project is submitted.
 			description VARCHAR(512), -- Size??
-			updated DATE,
+			updated TIMESTAMP WITH TIME ZONE,
 			version INT,
 			PRIMARY KEY (id, pid)
 		)`,
