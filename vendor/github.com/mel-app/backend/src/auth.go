@@ -9,7 +9,6 @@ package backend
 
 import (
 	"bytes"
-	"crypto/rand"
 	"fmt"
 	"log"
 	"net/http"
@@ -58,13 +57,13 @@ func encryptPassword(password string, salt []byte) ([]byte, error) {
 }
 
 // authenticateUser checks that the user and password in the given HTTP request.
-func authenticateUser(writer http.ResponseWriter, fail func(int), request *http.Request, db *sql.DB) (user string, ok bool) {
+func authenticateUser(writer http.ResponseWriter, fail func(int), request *http.Request, db *sql.DB) (user, password string, ok bool) {
 	// get the user name and password.
-	user, password, ok := request.BasicAuth()
+	user, password, ok = request.BasicAuth()
 	if !ok {
 		writer.Header().Add("WWW-Authenticate", "basic realm=\"\"")
 		fail(http.StatusUnauthorized)
-		return user, false
+		return user, password, false
 	}
 
 	// Retrieve the salt and database password.
@@ -73,52 +72,36 @@ func authenticateUser(writer http.ResponseWriter, fail func(int), request *http.
 	err := db.QueryRow("SELECT salt, password FROM users WHERE name=$1", user).Scan(&salt, &dbpassword)
 	if err == sql.ErrNoRows && request.URL.Path == "/login" && request.Method == http.MethodPost {
 		// FIXME: Special case creating a new user.
-		log.Printf("Creating a new user %s\n", user)
-		_, err = rand.Read(salt)
-		if err != nil {
-			internalError(fail, err)
-			return user, false
-		}
-		key, err := encryptPassword(password, salt)
-		if err != nil {
-			internalError(fail, err)
-			return user, false
-		}
-		_, err = db.Exec("INSERT INTO users VALUES ($1, $2, $3, $4)", user, salt, key, false)
-		if err != nil {
-			internalError(fail, err)
-			return user, false
-		}
-		return user, true
+		return user, password, true
 	} else if err == sql.ErrNoRows {
 		log.Printf("No such user %s\n", user)
 		fail(http.StatusForbidden)
-		return user, false
+		return user, password, false
 	} else if err != nil {
 		internalError(fail, err)
-		return user, false
+		return user, password, false
 	}
 
 	key, err := encryptPassword(password, salt)
 	if err != nil {
 		internalError(fail, err)
-		return user, false
+		return user, password, false
 	}
 	if !bytes.Equal(key, dbpassword) {
 		log.Printf("Invalid password for user %s\n", user)
 		fail(http.StatusForbidden)
-		return user, false
+		return user, password, false
 	}
-	return user, true
+	return user, password, true
 }
 
 // authenticateRequest checks that the given user has permission to complete
 // the request.
 func authenticateRequest(request *http.Request, defaultResource resource) (ok bool) {
-	return ((request.Method == http.MethodGet) && (defaultResource.Permissions()&get != 0)) ||
-		((request.Method == http.MethodPut) && (defaultResource.Permissions()&set != 0)) ||
-		((request.Method == http.MethodPost) && (defaultResource.Permissions()&create != 0)) ||
-		((request.Method == http.MethodDelete) && (defaultResource.Permissions()&delete != 0))
+	return ((request.Method == http.MethodGet) && (defaultResource.forbidden()&get == 0)) ||
+		((request.Method == http.MethodPut) && (defaultResource.forbidden()&set == 0)) ||
+		((request.Method == http.MethodPost) && (defaultResource.forbidden()&create == 0)) ||
+		((request.Method == http.MethodDelete) && (defaultResource.forbidden()&delete == 0))
 }
 
 // vim: sw=4 ts=4 noexpandtab

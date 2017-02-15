@@ -9,6 +9,7 @@ package backend
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 )
 
@@ -24,6 +25,41 @@ func NewDB(db *sql.DB) DB {
 func (d DB) SetIsManager(user string, isManager bool) error {
 	_, err := d.db.Exec("UPDATE users SET is_manager=$1 WHERE name=$2",
 		isManager, user)
+	return err
+}
+
+// DeleteUser removes the given user.
+func (d DB) DeleteUser(user string) error {
+	// Delete all connections to the account.
+	for _, table := range []string{"views", "owns"} {
+		rows, err := d.db.Query(fmt.Sprintf("SELECT pid FROM %s WHERE name=$1", table), user)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var id uint = 0
+			err = rows.Scan(&id)
+			if err != nil {
+				return err
+			}
+			project, err := newProject(user, id, d.db)
+			if err != nil {
+				return err
+			}
+			err = project.delete()
+			if err != nil {
+				return err
+			}
+		}
+		if rows.Err() != nil {
+			return rows.Err()
+		}
+	}
+
+	// Actually delete the account.
+	_, err := d.db.Exec("DELETE FROM users WHERE name=$1", user)
 	return err
 }
 

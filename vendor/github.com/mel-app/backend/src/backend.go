@@ -21,13 +21,13 @@ func handle(writer http.ResponseWriter, request *http.Request, db *sql.DB) {
 	fail := func(status int) { http.Error(writer, http.StatusText(status), status) }
 
 	// Authenticate the user.
-	user, ok := authenticateUser(writer, fail, request, db)
+	user, password, ok := authenticateUser(writer, fail, request, db)
 	if !ok {
 		return
 	}
 
 	// get the corresponding defaultResource and authenticate the request.
-	defaultResource, err := fromURI(user, request.URL.Path, db)
+	defaultResource, err := fromURI(user, password, request.URL.Path, db)
 	if err == invalidResource {
 		http.NotFound(writer, request)
 		return
